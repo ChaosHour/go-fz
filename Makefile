@@ -1,15 +1,17 @@
 BINARY := go-fz
 PKG    := .
+BINDIR := bin
 
 .PHONY: all build run test vet fmt fmt-check clean install
 
 all: build
 
 build:
-	go build -o $(BINARY) $(PKG)
+	mkdir -p $(BINDIR)
+	go build -o $(BINDIR)/$(BINARY) $(PKG)
 
 run: build
-	./$(BINARY) $(ARGS)
+	./$(BINDIR)/$(BINARY) $(ARGS)
 
 test:
 	go test ./...
@@ -24,7 +26,7 @@ fmt-check:
 	@test -z "$$(gofmt -l .)" || (echo "gofmt needs to be run on:" && gofmt -l . && exit 1)
 
 clean:
-	rm -f $(BINARY)
+	rm -rf $(BINDIR)
 
 install:
 	go install $(PKG)

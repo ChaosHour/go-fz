@@ -16,7 +16,7 @@ Requires Go 1.24+ (developed against 1.26).
 ```sh
 git clone <this repo>
 cd go-fz
-make build      # produces ./go-fz
+make build      # produces ./bin/go-fz
 ```
 
 Or install it onto your `$GOPATH/bin`:
@@ -84,7 +84,7 @@ skipped rather than aborting the whole scan.
 ## Development
 
 ```sh
-make build       # build ./go-fz
+make build       # build ./bin/go-fz
 make run ARGS="-depth 1 ."   # build and run with args
 make test        # go test ./...
 make vet         # go vet ./...
