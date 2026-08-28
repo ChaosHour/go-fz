@@ -119,7 +119,12 @@ func scan(root string, exclude map[string]bool) ([]fileEntry, map[string]*dirNod
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "warning: %v\n", err)
-			if d != nil && d.IsDir() {
+			if d == nil {
+				// Failed to stat path itself (most commonly root): nothing
+				// to continue walking, so propagate the error.
+				return err
+			}
+			if d.IsDir() {
 				return fs.SkipDir
 			}
 			return nil
