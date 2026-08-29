@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"bytes"
@@ -47,9 +47,9 @@ func buildTree(t *testing.T) string {
 func TestScanAggregatesSizesBottomUp(t *testing.T) {
 	root := buildTree(t)
 
-	files, dirs, err := scan(root, nil)
+	files, dirs, err := Scan(root, nil)
 	if err != nil {
-		t.Fatalf("scan: %v", err)
+		t.Fatalf("Scan: %v", err)
 	}
 
 	if len(files) != 4 {
@@ -69,8 +69,8 @@ func TestScanAggregatesSizesBottomUp(t *testing.T) {
 			t.Errorf("missing dir node for %q", path)
 			continue
 		}
-		if node.size != want {
-			t.Errorf("size(%q) = %d, want %d", path, node.size, want)
+		if node.Size != want {
+			t.Errorf("size(%q) = %d, want %d", path, node.Size, want)
 		}
 	}
 }
@@ -78,9 +78,9 @@ func TestScanAggregatesSizesBottomUp(t *testing.T) {
 func TestScanComputesDepthRelativeToRoot(t *testing.T) {
 	root := buildTree(t)
 
-	_, dirs, err := scan(root, nil)
+	_, dirs, err := Scan(root, nil)
 	if err != nil {
-		t.Fatalf("scan: %v", err)
+		t.Fatalf("Scan: %v", err)
 	}
 
 	wantDepths := map[string]int{
@@ -96,8 +96,8 @@ func TestScanComputesDepthRelativeToRoot(t *testing.T) {
 			t.Errorf("missing dir node for %q", path)
 			continue
 		}
-		if node.depth != want {
-			t.Errorf("depth(%q) = %d, want %d", path, node.depth, want)
+		if node.Depth != want {
+			t.Errorf("depth(%q) = %d, want %d", path, node.Depth, want)
 		}
 	}
 }
@@ -105,9 +105,9 @@ func TestScanComputesDepthRelativeToRoot(t *testing.T) {
 func TestScanExcludeSkipsSubtreeEntirely(t *testing.T) {
 	root := buildTree(t)
 
-	files, dirs, err := scan(root, map[string]bool{"c": true})
+	files, dirs, err := Scan(root, map[string]bool{"c": true})
 	if err != nil {
-		t.Fatalf("scan: %v", err)
+		t.Fatalf("Scan: %v", err)
 	}
 
 	if _, ok := dirs[filepath.Join(root, "a", "b", "c")]; ok {
@@ -115,8 +115,8 @@ func TestScanExcludeSkipsSubtreeEntirely(t *testing.T) {
 	}
 
 	for _, f := range files {
-		if filepath.Base(f.path) == "small.bin" {
-			t.Errorf("excluded file %q should not appear in files", f.path)
+		if filepath.Base(f.Path) == "small.bin" {
+			t.Errorf("excluded file %q should not appear in files", f.Path)
 		}
 	}
 	if len(files) != 3 {
@@ -134,8 +134,8 @@ func TestScanExcludeSkipsSubtreeEntirely(t *testing.T) {
 		if !ok {
 			t.Fatalf("missing dir node for %q", path)
 		}
-		if node.size != want {
-			t.Errorf("size(%q) = %d, want %d", path, node.size, want)
+		if node.Size != want {
+			t.Errorf("size(%q) = %d, want %d", path, node.Size, want)
 		}
 	}
 }
@@ -144,9 +144,9 @@ func TestScanExcludeMatchesExactNameOnly(t *testing.T) {
 	root := t.TempDir()
 	mustWriteFile(t, filepath.Join(root, "cached", "file.bin"), 100)
 
-	files, dirs, err := scan(root, map[string]bool{"cache": true})
+	files, dirs, err := Scan(root, map[string]bool{"cache": true})
 	if err != nil {
-		t.Fatalf("scan: %v", err)
+		t.Fatalf("Scan: %v", err)
 	}
 
 	if _, ok := dirs[filepath.Join(root, "cached")]; !ok {
@@ -162,9 +162,9 @@ func TestScanExcludeDoesNotSkipRootEvenIfNameMatches(t *testing.T) {
 	root := filepath.Join(parent, "cache")
 	mustWriteFile(t, filepath.Join(root, "file.bin"), 100)
 
-	files, dirs, err := scan(root, map[string]bool{"cache": true})
+	files, dirs, err := Scan(root, map[string]bool{"cache": true})
 	if err != nil {
-		t.Fatalf("scan: %v", err)
+		t.Fatalf("Scan: %v", err)
 	}
 	if _, ok := dirs[root]; !ok {
 		t.Error("root itself must never be excluded, even if its name matches an exclude pattern")
@@ -177,23 +177,23 @@ func TestScanExcludeDoesNotSkipRootEvenIfNameMatches(t *testing.T) {
 func TestScanEmptyDirectoryHasZeroSize(t *testing.T) {
 	root := t.TempDir()
 
-	_, dirs, err := scan(root, nil)
+	_, dirs, err := Scan(root, nil)
 	if err != nil {
-		t.Fatalf("scan: %v", err)
+		t.Fatalf("Scan: %v", err)
 	}
 	node, ok := dirs[root]
 	if !ok {
 		t.Fatal("missing root dir node")
 	}
-	if node.size != 0 {
-		t.Errorf("size(root) = %d, want 0", node.size)
+	if node.Size != 0 {
+		t.Errorf("size(root) = %d, want 0", node.Size)
 	}
 }
 
 func TestScanNonexistentRootReturnsError(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "does-not-exist")
 
-	_, _, err := scan(root, nil)
+	_, _, err := Scan(root, nil)
 	if err == nil {
 		t.Fatal("scan of a nonexistent root should return an error")
 	}
@@ -214,8 +214,8 @@ func TestHumanSize(t *testing.T) {
 		{1024 * 1024 * 1024 * 1024, "1.0TiB"},
 	}
 	for _, tt := range tests {
-		if got := humanSize(tt.in); got != tt.want {
-			t.Errorf("humanSize(%d) = %q, want %q", tt.in, got, tt.want)
+		if got := HumanSize(tt.in); got != tt.want {
+			t.Errorf("HumanSize(%d) = %q, want %q", tt.in, got, tt.want)
 		}
 	}
 }
