@@ -1,5 +1,5 @@
 BINARY := go-fz
-PKG    := .
+PKG    := ./cmd/go-fz
 BINDIR := bin
 
 .PHONY: all build run test vet fmt fmt-check clean install
